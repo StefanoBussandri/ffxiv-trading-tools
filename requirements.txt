@@ -1,0 +1,11 @@
+# pip-only mirror of pyproject.toml — pinned to the current uv.lock versions.
+# pyproject.toml stays the source of truth for `uv`; this file lets the
+# friend's plain-Python run.bat install without uv. pip resolves transitives.
+fastapi==0.136.1
+uvicorn[standard]==0.47.0
+httpx==0.28.1
+pydantic-settings==2.14.1
+lxml==6.1.0
+markdownify==1.2.2
+aiosqlite==0.22.1
+beautifulsoup4==4.14.3

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ffxiv-trader — dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<header data-component="topbar" data-active="dashboard"></header>
+<div data-component="taxbar"></div>
+
+<div class="page-head">
+  <h1>Dashboard</h1>
+  <span class="sub" id="status"></span>
+  <button id="dash-cog" class="icon-btn" type="button" title="Edit dashboard" aria-label="Edit dashboard">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"></circle>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+    </svg>
+  </button>
+  <div class="home-info" id="home-info" style="display:none">
+    <span class="swatch"></span>
+    <span class="k">Home</span><span class="v" id="home-world">—</span>
+    <span class="k" style="margin-left:8px">DC</span><span class="v" id="dc">—</span>
+  </div>
+</div>
+
+<div id="dash-grid" class="dash-grid"></div>
+
+<div id="page-loader" class="page-loader"><span class="spinner"></span></div>
+
+<script src="/js/partials.js"></script>
+<script src="/js/toast.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/alerts.js"></script>
+<script src="/js/item-detail.js"></script>
+<script src="/js/tax.js"></script>
+<script src="/js/rescan-timer.js"></script>
+<script src="/js/settings.js"></script>
+<script src="/js/dashboard-grid.js"></script>
+<script src="/js/dashboard-widgets.js"></script>
+<script src="/js/dashboard.js"></script>
+<script src="/js/dashboard-editor.js"></script>
+</body>
+</html>

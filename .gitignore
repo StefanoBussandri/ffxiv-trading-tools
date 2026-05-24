@@ -1,0 +1,21 @@
+# secrets / local config
+.env
+.claude/
+
+# runtime data — regenerated on first run
+data.db
+data.db-*
+cache/
+reset-backup/
+
+# python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# OS
+.DS_Store
+Thumbs.db

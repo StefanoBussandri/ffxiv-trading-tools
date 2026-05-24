@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ffxiv-trader — history</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<header data-component="topbar" data-active="history"></header>
+<div data-component="taxbar"></div>
+
+<div class="page-head">
+  <h1>History</h1>
+  <span class="sub">Items that have shown up in past scans.</span>
+</div>
+
+<div class="filters controls">
+  <label>Days
+    <input type="number" id="days" min="1" max="365" value="7">
+  </label>
+  <label>Source
+    <select id="source">
+      <option value="all">All</option>
+      <option value="cross-world">Cross-world</option>
+      <option value="vendor">Vendor</option>
+    </select>
+  </label>
+  <input type="search" id="search" class="search-input" placeholder="Search…" aria-label="Search this page">
+  <span id="status" class="dim"></span>
+  <div class="spacer"></div>
+  <button class="btn" id="reload" title="Reload">Reload</button>
+</div>
+
+<main>
+  <div class="table-wrap">
+    <table class="data" id="hist">
+      <thead>
+        <tr>
+          <th class="col-icon" title="Item icon"></th>
+          <th class="col-item" title="Item name (click to open wiki)">Item</th>
+          <th class="col-q" title="Quality">Q</th>
+          <th class="col-source" title="cross-world or vendor">Source</th>
+          <th class="col-appearances num" data-sort="appearances" title="Times this item was profitable in scans within the window">Appearances <span class="arrow"></span></th>
+          <th class="col-profit num" data-sort="profit" title="Average profit per unit over appearances">Avg Profit <span class="arrow"></span></th>
+          <th class="col-roi num" data-sort="roi_pct" title="Average ROI% over appearances">Avg ROI% <span class="arrow"></span></th>
+          <th class="col-velocity num" data-sort="velocity" title="Average sales per day">Avg Sales/d <span class="arrow"></span></th>
+          <th class="col-pday num" data-sort="profit_per_day" title="Average profit × sales/day">Avg Profit/d <span class="arrow"></span></th>
+          <th class="col-time" data-sort="updated" title="Most recent observed_at for this item">Last Seen <span class="arrow"></span></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</main>
+
+<script src="/js/partials.js"></script>
+<script src="/js/toast.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/alerts.js"></script>
+<script src="/js/item-detail.js"></script>
+<script src="/js/tax.js"></script>
+<script src="/js/rescan-timer.js"></script>
+<script src="/js/settings.js"></script>
+<script src="/js/search.js"></script>
+<script src="/js/history.js"></script>
+</body>
+</html>

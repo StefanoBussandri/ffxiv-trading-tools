@@ -1,0 +1,48 @@
+<!--
+  Topbar component — source-of-truth reference.
+  Markup is rendered by static/js/partials.js (kept in sync there).
+  Edit BOTH this file and partials.js when changing structure.
+
+  Usage in page:
+    <header data-component="topbar" data-active="dashboard"></header>
+
+  data-active values: dashboard | reliable | cross-world | vendor | maps | mounts | minions | favourites | history
+-->
+<header class="topbar">
+  <div class="brand">
+    <img class="mark" src="/img/favicon.svg" alt="" width="22" height="22">
+    <div class="name"><b>ffxiv</b>-trader</div>
+  </div>
+
+  <nav class="main-nav nav">
+    <a href="/dashboard.html"  data-nav="dashboard">Dashboard</a>
+    <a href="/reliable.html"   data-nav="reliable">Reliable</a>
+    <a href="/index.html"      data-nav="cross-world">Cross-world</a>
+    <a href="/vendor.html"     data-nav="vendor">Vendor</a>
+    <a href="/maps.html"       data-nav="maps">Maps</a>
+    <a href="/mounts.html"     data-nav="mounts">Mounts</a>
+    <a href="/minions.html"    data-nav="minions">Minions</a>
+    <a href="/favourites.html"  data-nav="favourites">Favourites</a>
+    <a href="/history.html"    data-nav="history">History</a>
+  </nav>
+
+  <div class="toolbar-r">
+    <div id="rescan-timer" class="status-pill">
+      <span class="dot"></span>
+      <span class="status-pill-label">Loading…</span>
+    </div>
+    <button class="icon-btn" id="topbar-rescan" title="Force rescan all">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <polyline points="1 20 1 14 7 14"></polyline>
+        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path>
+      </svg>
+    </button>
+    <button class="icon-btn" id="settings-btn" title="Settings">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+  </div>
+</header>

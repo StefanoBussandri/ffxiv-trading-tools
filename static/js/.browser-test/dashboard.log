@@ -1,0 +1,5 @@
+[7228:8216:0519/182809.709:INFO:components\enterprise\browser\controller\chrome_browser_cloud_management_controller.cc:238] No machine level policy manager exists.
+[7228:8532:0519/182809.755:WARNING:chrome\browser\extensions\external_pref_loader.cc:294] You are using an old-style extension deployment method (external_extensions.json), which will soon be deprecated. (see http://developer.chrome.com/docs/extensions/how-to/distribute/install-extensions)
+[7228:2580:0519/182812.287:ERROR:google_apis\gcm\engine\registration_request.cc:291] Registration response error message: DEPRECATED_ENDPOINT
+[7228:2580:0519/182812.313:ERROR:google_apis\gcm\engine\registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR
+[7228:2580:0519/182812.321:ERROR:google_apis\gcm\engine\registration_request.cc:291] Registration response error message: PHONE_REGISTRATION_ERROR

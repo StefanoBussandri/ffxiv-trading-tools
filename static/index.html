@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>ffxiv-trader — cross-world</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<header data-component="topbar" data-active="cross-world"></header>
+<div data-component="taxbar"></div>
+
+<div class="page-head">
+  <h1>Cross-world</h1>
+  <span class="sub">Buy on rival worlds, sell on home.</span>
+</div>
+
+<div class="filters controls">
+  <label>Quality
+    <select id="quality">
+      <option value="both">Both</option>
+      <option value="hq">HQ</option>
+      <option value="nq">NQ</option>
+    </select>
+  </label>
+  <button class="btn" id="cols-filters-btn" type="button" data-context="opps" title="Columns &amp; filters">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+    Columns &amp; filters
+  </button>
+  <input type="search" id="search" class="search-input" placeholder="Search…" aria-label="Search this page">
+  <span id="status" class="dim"></span>
+  <div class="spacer"></div>
+</div>
+
+<main>
+  <div class="table-wrap">
+    <table class="data" id="opps">
+      <thead>
+        <tr>
+          <th class="col-icon" title="Item icon"></th>
+          <th class="col-item" title="Item name (click to open wiki)">Item</th>
+          <th class="col-q" title="Quality: HQ or NQ — tracked separately">Q</th>
+          <th class="col-world" title="Cheapest rival world to buy from on your DC">Buy World</th>
+          <th class="col-price num" data-sort="buy_price" title="Best buy price (per unit) on rival world">Buy <span class="arrow"></span></th>
+          <th class="col-world" title="Your home world (where you list to sell)">Sell World</th>
+          <th class="col-price num" data-sort="sell_price" title="Current best sell listing on home world">Sell <span class="arrow"></span></th>
+          <th class="col-profit num" data-sort="profit" title="sell × (1 − tax) − buy. Tax depends on retainer city.">Profit <span class="arrow"></span></th>
+          <th class="col-roi num" data-sort="roi_pct" title="Return on investment: profit / buy × 100">ROI% <span class="arrow"></span></th>
+          <th class="col-velocity num" data-sort="velocity" title="Average sales per day on your home world">Sales/d <span class="arrow"></span></th>
+          <th class="col-pday num" data-sort="profit_per_day" title="profit × sales/day — theoretical revenue if you flip every sale">Profit/d <span class="arrow"></span></th>
+          <th class="col-spread num" data-sort="spread_pct" title="(sell listing − recent actual sale) / recent sale × 100.">Spread% <span class="arrow"></span></th>
+          <th class="col-depth num" data-sort="top_depth" title="Quantity in the cheapest current listing on home world. Low = thin market.">Depth <span class="arrow"></span></th>
+          <th class="col-gap num" data-sort="undercut_gap" title="(2nd cheapest − cheapest) / cheapest × 100.">Gap% <span class="arrow"></span></th>
+          <th class="col-time" data-sort="recent_purchase_ts" title="Time since the most recent actual sale on home world">Last Sale <span class="arrow"></span></th>
+          <th class="col-time" data-sort="updated" title="Time since rival/home world last uploaded to Universalis">Updated <span class="arrow"></span></th>
+          <th class="col-actions" title="Star / per-row rescan"></th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div class="pagination">
+    <button class="btn" id="prev-page">‹ Prev</button>
+    <span id="page-info">Page 1 of 1</span>
+    <button class="btn" id="next-page">Next ›</button>
+  </div>
+</main>
+
+<script>window.OPP_ENDPOINT = '/api/opportunities/cross-world';</script>
+<script src="/js/partials.js"></script>
+<script src="/js/toast.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/alerts.js"></script>
+<script src="/js/item-detail.js"></script>
+<script src="/js/tax.js"></script>
+<script src="/js/rescan-timer.js"></script>
+<script src="/js/settings.js"></script>
+<script src="/js/cols-filters.js"></script>
+<script src="/js/search.js"></script>
+<script src="/js/app.js"></script>
+
+<!-- Refresh-all icon in topbar already forwards to /api/refresh?resource=all.
+     Page-level force-rescan is wired by listening for ft-rescan-all in app.js (not required). -->
+<script>
+  window.addEventListener('ft-rescan-all', () => {
+    document.querySelector('#refresh')?.click?.();
+  });
+</script>
+</body>
+</html>

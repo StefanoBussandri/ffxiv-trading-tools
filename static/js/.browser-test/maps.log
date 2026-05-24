@@ -1,0 +1,2 @@
+[15640:13528:0519/182818.659:INFO:components\enterprise\browser\controller\chrome_browser_cloud_management_controller.cc:238] No machine level policy manager exists.
+[15640:21000:0519/182818.696:WARNING:chrome\browser\extensions\external_pref_loader.cc:294] You are using an old-style extension deployment method (external_extensions.json), which will soon be deprecated. (see http://developer.chrome.com/docs/extensions/how-to/distribute/install-extensions)

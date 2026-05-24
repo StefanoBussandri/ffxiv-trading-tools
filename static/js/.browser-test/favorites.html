@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8">
+<title>ffxiv-trader — favorites</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+
+<header data-component="topbar" data-active="favorites" class="topbar">
+      <div class="brand">
+        <div class="mark">ff</div>
+        <div class="name"><b>ffxiv</b>-trader</div>
+      </div>
+      <nav class="main-nav nav"><a href="/dashboard.html" data-nav="dashboard">Dashboard</a><a href="/reliable.html" data-nav="reliable">Reliable</a><a href="/index.html" data-nav="cross-world">Cross-world</a><a href="/vendor.html" data-nav="vendor">Vendor</a><a href="/maps.html" data-nav="maps">Maps</a><a href="/favorites.html" data-nav="favorites" class="active">Favorites</a><a href="/history.html" data-nav="history">History</a></nav>
+      <div class="toolbar-r">
+        <div id="rescan-timer" class="status-pill" title="Auto-rescan every 300s · next at 18:32:36"><span class="dot"></span><span class="status-pill-label">Next rescan</span><span class="sep">·</span><span class="countdown mono">04:13</span></div>
+        <button class="icon-btn" id="topbar-rescan" title="Force rescan all"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path></svg></button>
+        <button class="icon-btn" id="settings-btn" title="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg></button>
+      </div>
+    </header>
+<div data-component="taxbar" class="taxbar">
+      <span class="label">Retainer tax</span>
+      <span id="tax-panel" class="tax-chips"><span class="tax-chip"><span class="city">Limsa Lominsa</span><span class="pct">5%</span></span><span class="tax-chip"><span class="city">Gridania</span><span class="pct">5%</span></span><span class="tax-chip"><span class="city">Ul'dah</span><span class="pct">5%</span></span><span class="tax-chip dc-active" title="cheapest on DC"><span class="city">Ishgard</span><span class="pct">3%</span></span><span class="tax-chip dc-active" title="cheapest on DC"><span class="city">Kugane</span><span class="pct">3%</span></span><span class="tax-chip dc-active" title="cheapest on DC"><span class="city">Crystarium</span><span class="pct">3%</span></span><span class="tax-chip home" title="cheapest on DC · your retainer city"><span class="city">Old Sharlayan</span><span class="pct">3%</span></span><span class="tax-chip dc-active" title="cheapest on DC"><span class="city">Tuliyollal</span><span class="pct">3%</span></span></span>
+      <span class="meta" id="tax-meta">
+        <span class="dim" title="15/05/2026, 21:34:58">updated 3d 20h</span>
+        <button class="refresh-tiny" id="tax-refresh" title="Refresh tax rates" aria-label="Refresh tax">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M3.51 9a9 9 0 0114.85-3.36L23 10"></path>
+          </svg>
+        </button>
+      </span>
+    </div>
+
+<div class="page-head">
+  <h1>Favorites</h1>
+  <span class="sub">Starred items, polled live.</span>
+</div>
+
+<div class="filters controls">
+  <label class="chip"><input type="checkbox" id="filter-stale"> Stale only</label>
+  <label class="chip"><input type="checkbox" id="filter-bargain"> Bargain (spread&lt;0)</label>
+  <span id="status" class="dim">4 favorites · 18:28:20</span>
+  <div class="poll-controls">
+    <label><input type="checkbox" id="poll-pause"> Pause</label>
+    <span id="countdown" class="dim">next refresh in 57s</span>
+    <button class="btn refresh" id="refresh" title="Refresh now" aria-label="Refresh">
+      <svg class="refresh-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="23 4 23 10 17 10"></polyline>
+        <polyline points="1 20 1 14 7 14"></polyline>
+        <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"></path>
+      </svg>
+    </button>
+  </div>
+</div>
+
+<main>
+  <div class="table-wrap">
+    <table class="data" id="favs">
+      <thead>
+        <tr>
+          <th class="col-icon" title="Item icon"></th>
+          <th class="col-item" title="Item name (click to open wiki)">Item</th>
+          <th class="col-q" title="Quality: HQ or NQ">Q</th>
+          <th class="col-world" title="Cheapest rival world on your DC (if profitable)">Buy World</th>
+          <th class="col-price num" title="Best buy price on rival world">Buy</th>
+          <th class="col-world" title="Your home world">Sell World</th>
+          <th class="col-price num" title="Current best sell listing on home world">Sell</th>
+          <th class="col-profit num" title="sell × (1 − tax) − buy (only when buy &lt; sell)">Profit</th>
+          <th class="col-roi num" title="profit / buy × 100">ROI%</th>
+          <th class="col-velocity num" title="Average sales per day on your home world">Sales/d</th>
+          <th class="col-pday num" title="profit × sales/day">Profit/d</th>
+          <th class="col-spread num" title="(sell − recent actual sale) / recent sale × 100. Negative = bargain.">Spread%</th>
+          <th class="col-depth num" title="Quantity in cheapest current listing.">Depth</th>
+          <th class="col-gap num" title="(2nd cheapest − cheapest) / cheapest × 100.">Gap%</th>
+          <th class="col-time" title="Time since the most recent actual sale on home world">Last Sale</th>
+          <th class="col-time" title="Time since home world last uploaded">Updated</th>
+          <th class="col-actions" title="Remove favorite"></th>
+        </tr>
+      </thead>
+      <tbody><tr>
+      <td class="col-icon"><img class="icon" src="/api/icon/49269" loading="lazy" alt=""></td>
+      <td class="col-item item-name"><a class="uni-link" href="https://universalis.app/market/49269" target="_blank" rel="noopener" title="Open on Universalis"><img class="uni-icon" src="/img/universalis.png" alt="Universalis"></a><a href="https://ffxiv.consolegameswiki.com/wiki/Courtly_Lover's_Filbert_Brush" target="_blank" rel="noopener">Courtly Lover's Filbert Brush</a></td>
+      <td class="col-q quality-hq">HQ</td>
+      <td class="col-world">Lich</td>
+      <td class="col-price num">199,989</td>
+      <td class="col-world">Odin</td>
+      <td class="col-price num">541,998</td>
+      <td class="col-profit num profit-pos">325,749</td>
+      <td class="col-roi num">162.9</td>
+      <td class="col-velocity num">3.49</td>
+      <td class="col-pday num">1,135,887</td>
+      <td class="col-spread num ">0.0</td>
+      <td class="col-depth num">1</td>
+      <td class="col-gap num">0.0</td>
+      <td class="col-time dim">2h 31m</td>
+      <td class="col-time dim">2h 9m</td>
+      <td class="col-actions">
+        <button class="star filled" data-iid="49269" data-q="hq" title="Remove">★</button>
+      </td>
+    </tr><tr>
+      <td class="col-icon"><img class="icon" src="/api/icon/49258" loading="lazy" alt=""></td>
+      <td class="col-item item-name"><a class="uni-link" href="https://universalis.app/market/49258" target="_blank" rel="noopener" title="Open on Universalis"><img class="uni-icon" src="/img/universalis.png" alt="Universalis"></a><a href="https://ffxiv.consolegameswiki.com/wiki/Courtly_Lover's_Daggers" target="_blank" rel="noopener">Courtly Lover's Daggers</a></td>
+      <td class="col-q quality-hq">HQ</td>
+      <td class="col-world">Lich</td>
+      <td class="col-price num">219,977</td>
+      <td class="col-world">Odin</td>
+      <td class="col-price num">279,997</td>
+      <td class="col-profit num profit-pos">51,620</td>
+      <td class="col-roi num">23.5</td>
+      <td class="col-velocity num">3.22</td>
+      <td class="col-pday num">166,165</td>
+      <td class="col-spread num ">0.0</td>
+      <td class="col-depth num">1</td>
+      <td class="col-gap num">0.0</td>
+      <td class="col-time dim">4h 59m</td>
+      <td class="col-time dim">4h 13m</td>
+      <td class="col-actions">
+        <button class="star filled" data-iid="49258" data-q="hq" title="Remove">★</button>
+      </td>
+    </tr><tr>
+      <td class="col-icon"><img class="icon" src="/api/icon/49263" loading="lazy" alt=""></td>
+      <td class="col-item item-name"><a class="uni-link" href="https://universalis.app/market/49263" target="_blank" rel="noopener" title="Open on Universalis"><img class="uni-icon" src="/img/universalis.png" alt="Universalis"></a><a href="https://ffxiv.consolegameswiki.com/wiki/Courtly_Lover's_Rapier" target="_blank" rel="noopener">Courtly Lover's Rapier</a></td>
+      <td class="col-q quality-hq">HQ</td>
+      <td class="col-world">Lich</td>
+      <td class="col-price num">219,988</td>
+      <td class="col-world">Odin</td>
+      <td class="col-price num">389,984</td>
+      <td class="col-profit num profit-pos">158,296</td>
+      <td class="col-roi num">72.0</td>
+      <td class="col-velocity num">2.15</td>
+      <td class="col-pday num">339,703</td>
+      <td class="col-spread num ">0.0</td>
+      <td class="col-depth num">1</td>
+      <td class="col-gap num">0.0</td>
+      <td class="col-time dim">1h 4m</td>
+      <td class="col-time dim">42m 8s</td>
+      <td class="col-actions">
+        <button class="star filled" data-iid="49263" data-q="hq" title="Remove">★</button>
+      </td>
+    </tr><tr>
+      <td class="col-icon"><img class="icon" src="/api/icon/49312" loading="lazy" alt=""></td>
+      <td class="col-item item-name"><a class="uni-link" href="https://universalis.app/market/49312" target="_blank" rel="noopener" title="Open on Universalis"><img class="uni-icon" src="/img/universalis.png" alt="Universalis"></a><a href="https://ffxiv.consolegameswiki.com/wiki/Courtly_Lover's_Choker_of_Slaying" target="_blank" rel="noopener">Courtly Lover's Choker of Slaying</a></td>
+      <td class="col-q quality-hq">HQ</td>
+      <td class="col-world">Shiva</td>
+      <td class="col-price num">170,052</td>
+      <td class="col-world">Odin</td>
+      <td class="col-price num">299,637</td>
+      <td class="col-profit num profit-pos">120,596</td>
+      <td class="col-roi num">70.9</td>
+      <td class="col-velocity num">5.90</td>
+      <td class="col-pday num">711,637</td>
+      <td class="col-spread num ">0.0</td>
+      <td class="col-depth num">1</td>
+      <td class="col-gap num">0.0</td>
+      <td class="col-time dim">2h 16m</td>
+      <td class="col-time dim">15m 43s</td>
+      <td class="col-actions">
+        <button class="star filled" data-iid="49312" data-q="hq" title="Remove">★</button>
+      </td>
+    </tr></tbody>
+    </table>
+  </div>
+</main>
+
+<script src="/js/partials.js"></script>
+<script src="/js/toast.js"></script>
+<script src="/js/common.js"></script>
+<script src="/js/tax.js"></script>
+<script src="/js/rescan-timer.js"></script>
+<script src="/js/settings.js"></script>
+<script src="/js/favorites.js"></script>
+
+
+</body></html>

@@ -1,0 +1,26 @@
+<!--
+  Taxbar component — source-of-truth reference.
+  Outer wrapper rendered by static/js/partials.js.
+  Inner chips + meta rendered by static/js/tax.js from /api/tax-rates.
+  Edit BOTH files when changing structure.
+
+  Usage in page:
+    <div data-component="taxbar"></div>
+
+  Chip classes (set by tax.js):
+    .tax-chip.home     — your retainer city (amber, starred)
+    .tax-chip.dc-active — cheapest options on your DC (green)
+    .tax-chip          — default (grey)
+-->
+<div class="taxbar">
+  <span class="label">Retainer tax</span>
+  <!-- chips injected here by tax.js: -->
+  <!--
+  <span class="tax-chip home"><span class="city">Old Sharlayan</span><span class="pct">3%</span></span>
+  <span class="tax-chip dc-active"><span class="city">Ishgard</span><span class="pct">3%</span></span>
+  <span class="tax-chip"><span class="city">Limsa Lominsa</span><span class="pct">5%</span></span>
+  -->
+  <span class="meta">
+    <!-- "updated Xd Yh" + refresh button injected by tax.js -->
+  </span>
+</div>
