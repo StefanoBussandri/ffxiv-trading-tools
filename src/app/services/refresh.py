@@ -18,6 +18,16 @@ VALID_RESOURCES = {
 # rescan state for UI countdown
 _last_rescan_ts: float = 0.0
 _rescan_in_progress: bool = False
+# Set by trigger_manual_rescan() so the auto-rescan loop can short-circuit its
+# current sleep and reschedule from the new _last_rescan_ts.
+_rescan_wake: asyncio.Event | None = None
+
+
+def _wake_event() -> asyncio.Event:
+    global _rescan_wake
+    if _rescan_wake is None:
+        _rescan_wake = asyncio.Event()
+    return _rescan_wake
 
 # Background bootstrap progress — surfaced via GET /api/startup/status so the
 # setup screen and topbar pill can show heavy data loading after the fast
@@ -84,9 +94,21 @@ async def _auto_rescan_loop() -> None:
     last_finished = await get_last_scan_finished()
     _last_rescan_ts = float(last_finished) if last_finished else time.time()
     log.info("auto-rescan loop started — interval=%ds", interval)
+    wake = _wake_event()
     while True:
         try:
-            await asyncio.sleep(interval)
+            # Sleep until the interval since the last scan elapses, OR until a
+            # manual rescan wakes us — in which case the new _last_rescan_ts
+            # already advanced and we re-enter the wait with a fresh budget.
+            remaining = interval - (time.time() - _last_rescan_ts)
+            if remaining > 0:
+                try:
+                    await asyncio.wait_for(wake.wait(), timeout=remaining)
+                except asyncio.TimeoutError:
+                    pass
+                else:
+                    wake.clear()
+                    continue  # manual scan handled it; recompute the budget
             log.info("auto-rescan firing")
             _rescan_in_progress = True
             await scan_cross_world(force=True)
@@ -100,6 +122,28 @@ async def _auto_rescan_loop() -> None:
         except Exception as e:
             _rescan_in_progress = False
             log.warning("auto-rescan iteration failed: %s", e)
+
+
+async def trigger_manual_rescan() -> None:
+    """Run cross-world + vendor scans, then wake the auto-rescan loop so it
+    rebases its countdown from now. Safe to spawn as a background task."""
+    global _last_rescan_ts, _rescan_in_progress
+    if _rescan_in_progress:
+        log.info("manual rescan ignored — scan already in progress")
+        return
+    from app.services.opportunities import scan_cross_world, scan_vendor
+    _rescan_in_progress = True
+    try:
+        log.info("manual rescan firing")
+        await scan_cross_world(force=True)
+        await scan_vendor(force=True)
+        _last_rescan_ts = time.time()
+        log.info("manual rescan complete")
+    except Exception as e:
+        log.warning("manual rescan failed: %s", e)
+    finally:
+        _rescan_in_progress = False
+        _wake_event().set()
 
 
 async def _background_bootstrap() -> None:

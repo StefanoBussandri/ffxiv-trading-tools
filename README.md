@@ -10,11 +10,11 @@ No Python install needed. The release ships everything (Python runtime, all
 dependencies, static assets) inside one folder.
 
 1. Go to the [Releases page](../../releases/latest) and download
-   `ffxiv-trader-vX.Y.Z-windows.zip`.
+   `FFXIV-Trader-vX.Y.Z-windows.zip`.
 2. Right-click the zip → **Extract All…** → pick any location (Desktop, a
    games folder, wherever). This folder is the whole app.
-3. Open the extracted `ffxiv-trader\` folder and double-click
-   **`ffxiv-trader.exe`**.
+3. Open the extracted `FFXIV-Trader\` folder and double-click
+   **`FFXIV Trader.exe`**.
 4. On first launch Windows SmartScreen may say *"Windows protected your PC"*.
    Click **More info → Run anyway** (the exe is unsigned but safe — built by
    GitHub Actions from this repo).
@@ -27,6 +27,17 @@ registry entries, no AppData, nothing left behind.
 
 The window stays responsive while the app talks to Universalis/XIVAPI; the
 server runs on a background thread.
+
+### Optional: Start Menu + Desktop shortcuts
+
+Inside the extracted folder, double-click **`Create shortcuts.bat`**. It
+adds an `FFXIV Trader` entry to the Start Menu and a shortcut on the
+Desktop, both pointing at the exe inside the folder. Running it again
+overwrites the existing shortcuts in place.
+
+To remove the shortcuts later, double-click **`Delete shortcuts.bat`** in
+the same folder. It deletes both `.lnk` files and skips any that are
+already missing, so it's safe to run more than once.
 
 ### Updating
 
@@ -129,12 +140,27 @@ window and ships as a single folder via PyInstaller.
 uv sync
 uv pip install -r requirements-build.txt
 uv run pyinstaller ffxiv-trader.spec --noconfirm --clean
-# Output: dist/ffxiv-trader/ffxiv-trader.exe
+# Output: dist/FFXIV Trader/FFXIV Trader.exe
 ```
 
-Test locally by running the exe out of `dist/ffxiv-trader/`. The window
+Test locally by running the exe out of `dist/FFXIV Trader/`. The window
 should open, the setup screen should appear, and `data.db` + `cache/` should
 appear next to the exe.
+
+#### Rebuilding the application icon
+
+The committed `static/img/app.ico` is rendered from `static/img/favicon.svg`
+by a one-off Pillow script. Re-run it whenever the favicon design changes:
+
+```powershell
+pip install Pillow
+python scripts/build_icon.py
+git add static/img/app.ico
+git commit -m "rebuild app icon"
+```
+
+The CI workflow reads `static/img/app.ico` from the repo; the build step
+itself doesn't depend on Pillow.
 
 #### Cutting a release on GitHub
 

@@ -5,7 +5,12 @@ Output: dist/ffxiv-trader/ (onedir). The friend unzips this folder, runs
 ffxiv-trader.exe, and gets the FastAPI server in a native pywebview window.
 db, cache/, .env are written next to the exe → one-folder install.
 """
+import os
+
 from PyInstaller.utils.hooks import collect_all, collect_submodules
+
+ICON_PATH = os.path.join("static", "img", "app.ico")
+ICON = ICON_PATH if os.path.exists(ICON_PATH) else None
 
 block_cipher = None
 
@@ -76,7 +81,7 @@ exe = EXE(
     a.scripts,
     [],
     exclude_binaries=True,
-    name="ffxiv-trader",
+    name="FFXIV Trader",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
@@ -87,6 +92,7 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+    icon=ICON,
 )
 
 coll = COLLECT(
@@ -97,5 +103,16 @@ coll = COLLECT(
     strip=False,
     upx=False,
     upx_exclude=[],
-    name="ffxiv-trader",
+    name="FFXIV Trader",
 )
+
+# PyInstaller `datas` files always land inside _internal/. We want the helper
+# .bat scripts to live next to the exe so the friend can double-click them
+# straight from the extracted folder, so copy them in post-COLLECT.
+import shutil  # noqa: E402
+
+_release_dir = os.path.join(DISTPATH, "FFXIV Trader")
+for _aux in ("Create shortcuts.bat", "Delete shortcuts.bat"):
+    _src = os.path.join(os.getcwd(), _aux)
+    if os.path.exists(_src) and os.path.isdir(_release_dir):
+        shutil.copy2(_src, os.path.join(_release_dir, _aux))

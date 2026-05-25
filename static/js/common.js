@@ -420,6 +420,28 @@ window.FT = (() => {
                        render: (r) => `<td class="col-roi num">${r.demand_pressure != null ? r.demand_pressure.toFixed(2) : '—'}</td>` },
     rel_trend:  { label: 'Trend', title: 'Profit history sparkline over the window', cls: 'col-spark',
                   render: (r, ctx) => `<td class="col-spark">${(ctx && ctx.sparkline) ? ctx.sparkline(r.profit_series) : ''}</td>` },
+
+    // --- History-only column defs ---
+    hist_source: { label: 'Source', title: 'cross-world or vendor', sort: 'source', cls: 'col-source',
+                   render: (r) => `<td class="col-source">${escapeHtml(r.source || '—')}</td>` },
+    hist_appearances: { label: 'Appearances', title: 'Times this item was profitable in scans within the window',
+                        sort: 'appearances', cls: 'col-appearances num',
+                        render: (r) => `<td class="col-appearances num">${r.appearances != null ? r.appearances : '—'}</td>` },
+    hist_avg_profit:  { label: 'Avg Profit', title: 'Average profit per unit over appearances',
+                        sort: 'profit', cls: 'col-profit num',
+                        render: (r) => `<td class="col-profit num ${profitClass(r.avg_profit)}">${fmt(r.avg_profit)}</td>` },
+    hist_avg_roi:     { label: 'Avg ROI%', title: 'Average ROI% over appearances',
+                        sort: 'roi_pct', cls: 'col-roi num',
+                        render: (r) => `<td class="col-roi num">${r.avg_roi_pct != null ? r.avg_roi_pct.toFixed(1) : '—'}</td>` },
+    hist_avg_velocity: { label: 'Avg Sales/d', title: 'Average sales per day over appearances',
+                         sort: 'velocity', cls: 'col-velocity num',
+                         render: (r) => `<td class="col-velocity num">${r.avg_velocity != null ? r.avg_velocity.toFixed(2) : '—'}</td>` },
+    hist_avg_pday:    { label: 'Avg Profit/d', title: 'Average profit × sales/day',
+                        sort: 'profit_per_day', cls: 'col-pday num',
+                        render: (r) => `<td class="col-pday num">${fmt(r.avg_profit_per_day)}</td>` },
+    hist_last_seen:   { label: 'Last Seen', title: 'Most recent observed_at for this item',
+                        sort: 'updated', cls: 'col-time',
+                        render: (r) => `<td class="col-time dim">${r.last_seen ? agoMs(r.last_seen * 1000) : '—'}</td>` },
   };
 
   const DEFAULT_LAYOUT_OPPS = [
@@ -511,11 +533,25 @@ window.FT = (() => {
     { id: 'actions',        visible: true },
   ];
 
+  const DEFAULT_LAYOUT_HISTORY = [
+    { id: 'icon',              visible: true },
+    { id: 'item',              visible: true },
+    { id: 'q',                 visible: true },
+    { id: 'hist_source',       visible: true },
+    { id: 'hist_appearances',  visible: true },
+    { id: 'hist_avg_profit',   visible: true },
+    { id: 'hist_avg_roi',      visible: true },
+    { id: 'hist_avg_velocity', visible: true },
+    { id: 'hist_avg_pday',     visible: true },
+    { id: 'hist_last_seen',    visible: true },
+  ];
+
   const DEFAULT_LAYOUTS = {
     opps: DEFAULT_LAYOUT_OPPS,
     reliable: DEFAULT_LAYOUT_RELIABLE,
     favourites: DEFAULT_LAYOUT_FAVOURITES,
     collectibles: DEFAULT_LAYOUT_COLLECTIBLES,
+    history: DEFAULT_LAYOUT_HISTORY,
   };
   // Column layouts are stored per PAGE, not per context — every page keeps its
   // own column setup. Bump version when any default layout changes.
@@ -620,6 +656,16 @@ window.FT = (() => {
     setTimeout(() => btn.classList.remove('copied'), 1000);
   });
 
+  // Disable wheel-scroll on focused number inputs. Browsers default behavior
+  // is to increment/decrement the value on scroll, which is easy to trip
+  // accidentally while scrolling the page over a form.
+  document.addEventListener('wheel', (e) => {
+    const t = e.target;
+    if (t && t.tagName === 'INPUT' && t.type === 'number' && document.activeElement === t) {
+      t.blur();
+    }
+  }, { passive: true });
+
   return {
     fmt, fmt2, agoMs, wikiLink, escapeHtml,
     matchesSearch, highlightName, emptySearchMsg,
@@ -631,7 +677,7 @@ window.FT = (() => {
     COLUMN_DEFS,
     DEFAULT_LAYOUT: DEFAULT_LAYOUT_OPPS,
     DEFAULT_LAYOUT_OPPS, DEFAULT_LAYOUT_RELIABLE, DEFAULT_LAYOUT_FAVOURITES,
-    DEFAULT_LAYOUT_COLLECTIBLES, DEFAULT_LAYOUTS,
+    DEFAULT_LAYOUT_COLLECTIBLES, DEFAULT_LAYOUT_HISTORY, DEFAULT_LAYOUTS,
     loadColumnLayout, saveColumnLayout, buildThead, buildRowHtml, visibleColCount,
     loadPageState, savePageState,
   };

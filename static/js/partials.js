@@ -57,15 +57,22 @@
     host.innerHTML = taxbarInner();
   });
 
-  // Wire topbar rescan-all icon.
+  // Wire topbar rescan-all icon. The endpoint kicks off the scan as a
+  // background task and returns immediately so the UI never blocks on the
+  // upstream calls — the status pill reflects progress.
   const rescanAllBtn = document.getElementById('topbar-rescan');
   rescanAllBtn?.addEventListener('click', async () => {
     rescanAllBtn.disabled = true;
     try {
-      const r = await fetch('/api/refresh?resource=all', { method: 'POST' });
+      const r = await fetch('/api/refresh/scans', { method: 'POST' });
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      if (window.toast) window.toast('Rescan started', 'info');
-      window.dispatchEvent(new CustomEvent('ft-rescan-all'));
+      const d = await r.json();
+      if (d.started) {
+        if (window.toast) window.toast('Rescan started', 'info');
+        window.dispatchEvent(new CustomEvent('ft-rescan-all'));
+      } else if (window.toast) {
+        window.toast(d.reason || 'Rescan already in progress', 'info');
+      }
     } catch (e) {
       if (window.toast) window.toast(e.message);
     } finally {

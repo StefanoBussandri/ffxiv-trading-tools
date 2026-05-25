@@ -238,10 +238,13 @@ nav.main-nav a.active::after, .nav a.active::after {
 .controls select, .controls input[type=number], .controls input[type=text],
 .filters select, .filters input[type=number], .filters input[type=text] {
   background: transparent; border: 0; color: var(--fg);
-  font: inherit; outline: none; cursor: pointer;
+  font: inherit; outline: none;
   font-weight: 500;
   padding: 0; margin: 0;
 }
+.controls select, .filters select { cursor: pointer; }
+.controls input[type=number], .controls input[type=text],
+.filters input[type=number], .filters input[type=text] { cursor: text; }
 .controls input[type=number] { width: 5rem; text-align: right; }
 .controls label > select, .controls label > input,
 .filters label > select, .filters label > input {

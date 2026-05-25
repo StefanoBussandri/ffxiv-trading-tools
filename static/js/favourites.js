@@ -2,13 +2,18 @@ const tbody = document.querySelector('#favs tbody');
 const thead = document.querySelector('#favs thead');
 const statusEl = document.querySelector('#status');
 const refreshBtn = document.querySelector('#refresh');
-const staleChk = document.querySelector('#filter-stale');
-const bargainChk = document.querySelector('#filter-bargain');
 
 let allRows = [];
 let taxRate = 0;
 let layout = FT.loadColumnLayout('favourites');
 let baseStatus = '';  // load-time status string, restored when search clears
+const filterState = { stale_only: false, bargain_only: false };
+
+function syncFiltersFromStore() {
+  const f = (window.FTFilters && window.FTFilters.load()) || {};
+  filterState.stale_only = !!f.stale_only;
+  filterState.bargain_only = !!f.bargain_only;
+}
 
 function setLoading(on, label) {
   statusEl.textContent = label || (on ? 'Loading' : '');
@@ -48,8 +53,8 @@ async function load() {
 
 function renderFiltered() {
   let rows = allRows;
-  if (staleChk?.checked) rows = rows.filter((r) => r.stale_listing);
-  if (bargainChk?.checked) rows = rows.filter((r) => (r.spread_pct || 0) < 0);
+  if (filterState.stale_only) rows = rows.filter((r) => r.stale_listing);
+  if (filterState.bargain_only) rows = rows.filter((r) => (r.spread_pct || 0) < 0);
   const q = (window.FTSearch && window.FTSearch.term()) || '';
   if (q) rows = rows.filter((r) => FT.matchesSearch(r, q));
   if (q) statusEl.textContent = `${rows.length} of ${allRows.length}`;
@@ -100,8 +105,6 @@ refreshBtn?.addEventListener('click', () => {
   load();
   if (window.FTAlerts) window.FTAlerts.recheck();      // favourites rescan resets alerts
 });
-staleChk?.addEventListener('change', renderFiltered);
-bargainChk?.addEventListener('change', renderFiltered);
 window.addEventListener('ft-search-changed', renderFiltered);
 // Refresh when a scan finishes (auto-rescan / first-run) — no separate poll.
 window.addEventListener('ft-data-refreshed', load);
@@ -112,8 +115,13 @@ window.addEventListener('ft-columns-changed', (e) => {
   rebuildHeader();
   renderFiltered();
 });
+window.addEventListener('ft-filters-changed', () => {
+  syncFiltersFromStore();
+  renderFiltered();
+});
 
 (async () => {
+  syncFiltersFromStore();
   rebuildHeader();
   await load();
 })();

@@ -5,10 +5,21 @@ const sourceEl = document.querySelector('#source');
 const reloadBtn = document.querySelector('#reload');
 const statusEl = document.querySelector('#status');
 
-let sortChain = [{ key: 'profit_per_day', dir: 'desc' }];
-let rowsCache = [];
-let baseStatus = '';  // load-time status string, restored when search clears
+const PAGE = 'history';
+const PAGE_STATE_DEFAULTS = {
+  days: 7,
+  source: 'all',
+  sort_chain: [{ key: 'profit_per_day', dir: 'desc' }],
+};
+const persisted = FT.loadPageState(PAGE, PAGE_STATE_DEFAULTS);
 
+let layout = FT.loadColumnLayout(PAGE, 'history');
+let rowsCache = [];
+let baseStatus = '';
+
+// Sort keys (shared with opps for header consistency) → server-side sort
+// columns. The server picks rows by the primary metric, so changing the
+// primary key refetches.
 const HIST_KEY_ALIAS = {
   profit: 'avg_profit',
   profit_per_day: 'avg_profit_per_day',
@@ -18,6 +29,22 @@ const HIST_KEY_ALIAS = {
   updated: 'last_seen',
 };
 
+const VALID_METRICS = new Set(['profit', 'profit_per_day', 'roi_pct', 'velocity', 'appearances']);
+
+const state = {
+  sort_chain: Array.isArray(persisted.sort_chain) && persisted.sort_chain.length
+    ? persisted.sort_chain.slice()
+    : [{ key: 'profit_per_day', dir: 'desc' }],
+};
+
+function persistState() {
+  FT.savePageState(PAGE, {
+    days: parseInt(daysEl.value, 10) || 7,
+    source: sourceEl.value,
+    sort_chain: state.sort_chain,
+  });
+}
+
 function setLoading(on, label) {
   statusEl.textContent = label || (on ? 'Loading' : '');
   statusEl.classList.toggle('loading', !!on);
@@ -25,10 +52,11 @@ function setLoading(on, label) {
 
 async function load() {
   setLoading(true, 'Loading');
-  const primary = sortChain[0] ? sortChain[0].key : 'profit_per_day';
+  const primaryKey = state.sort_chain[0] ? state.sort_chain[0].key : 'profit_per_day';
+  const metric = VALID_METRICS.has(primaryKey) ? primaryKey : 'profit_per_day';
   const params = new URLSearchParams({
     days: daysEl.value,
-    metric: primary,
+    metric,
     source: sourceEl.value,
     limit: 500,
   });
@@ -36,9 +64,10 @@ async function load() {
     const r = await fetch('/api/history/top?' + params.toString());
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const data = await r.json();
-    rowsCache = data.rows;
+    // Normalize for shared column renderers (item / icon use camelCase).
+    rowsCache = data.rows.map((row) => ({ ...row, itemId: row.item_id }));
     renderSorted();
-    baseStatus = `${data.count} rows · window ${data.days}d · primary sort ${primary}`;
+    baseStatus = `${data.count} rows · window ${data.days}d · primary sort ${metric}`;
     setLoading(false, baseStatus);
   } catch (e) {
     setLoading(false, 'Error: ' + e.message);
@@ -50,68 +79,64 @@ function renderSorted() {
   let rows = rowsCache.slice();
   const q = (window.FTSearch && window.FTSearch.term()) || '';
   if (q) rows = rows.filter((r) => FT.matchesSearch(r, q));
-  rows = FT.sortRows(rows, sortChain, HIST_KEY_ALIAS);
+  rows = FT.sortRows(rows, state.sort_chain, HIST_KEY_ALIAS);
   if (q) statusEl.textContent = `${rows.length} of ${rowsCache.length}`;
   else if (baseStatus) statusEl.textContent = baseStatus;
   render(rows);
 }
 
 function render(rows) {
-  tbody.innerHTML = '';
   if (!rows.length) {
-    const tr = document.createElement('tr');
-    tr.innerHTML = `<td colspan="10" class="empty-state">${FT.emptySearchMsg('No history rows in this window.')}</td>`;
-    tbody.appendChild(tr);
+    tbody.innerHTML = `<tr><td colspan="${FT.visibleColCount(layout)}" class="empty-state">${FT.emptySearchMsg('No history rows in this window.')}</td></tr>`;
     return;
   }
-  for (const row of rows) {
-    const tr = document.createElement('tr');
-    tr.dataset.iid = row.item_id;
-    tr.dataset.q = row.quality;
-    const iconUrl = row.icon_url || `/api/icon/${row.item_id}`;
-    const icon = `<img class="icon" src="${iconUrl}" loading="lazy" alt="" onerror="this.outerHTML='<div class=icon></div>'">`;
-    tr.innerHTML = `
-      <td class="col-icon">${icon}</td>
-      <td class="col-item item-name">${FT.wikiLink(row.name)}</td>
-      <td class="col-q quality-${row.quality}">${row.quality.toUpperCase()}</td>
-      <td class="col-source">${row.source}</td>
-      <td class="col-appearances num">${row.appearances}</td>
-      <td class="col-profit num ${FT.profitClass(row.avg_profit)}">${FT.fmt(row.avg_profit)}</td>
-      <td class="col-roi num">${row.avg_roi_pct != null ? row.avg_roi_pct.toFixed(1) : '—'}</td>
-      <td class="col-velocity num">${row.avg_velocity != null ? row.avg_velocity.toFixed(2) : '—'}</td>
-      <td class="col-pday num">${FT.fmt(row.avg_profit_per_day)}</td>
-      <td class="col-time dim">${FT.agoMs(row.last_seen * 1000)}</td>
-    `;
-    tbody.appendChild(tr);
-  }
+  tbody.innerHTML = rows.map((row) =>
+    `<tr data-iid="${row.itemId}" data-q="${row.quality}">${FT.buildRowHtml(row, layout)}</tr>`,
+  ).join('');
+}
+
+function rebuildHeader() {
+  FT.buildThead(thead, layout);
+  attachSort();
 }
 
 function attachSort() {
   thead.querySelectorAll('th[data-sort]').forEach((th) => {
     th.classList.add('sortable');
     th.addEventListener('click', (e) => {
-      const prevPrimary = sortChain[0] ? sortChain[0].key : null;
-      FT.handleHeaderClick(sortChain, th.dataset.sort, e.shiftKey);
-      FT.renderSortChain(thead, sortChain);
-      const newPrimary = sortChain[0] ? sortChain[0].key : null;
-      if (newPrimary !== prevPrimary) {
-        // history server-side filter depends on primary; refetch
+      const prevPrimary = state.sort_chain[0] ? state.sort_chain[0].key : null;
+      FT.handleHeaderClick(state.sort_chain, th.dataset.sort, e.shiftKey);
+      FT.renderSortChain(thead, state.sort_chain);
+      persistState();
+      const newPrimary = state.sort_chain[0] ? state.sort_chain[0].key : null;
+      if (newPrimary !== prevPrimary && VALID_METRICS.has(newPrimary || '')) {
+        // Server picks rows by primary metric — refetch to pull a fresh top-N.
         load();
       } else {
         renderSorted();
       }
     });
   });
-  FT.renderSortChain(thead, sortChain);
+  FT.renderSortChain(thead, state.sort_chain);
 }
 
-daysEl.addEventListener('change', load);
-sourceEl.addEventListener('change', load);
+// Hydrate filters from persisted state.
+if (persisted.days != null) daysEl.value = persisted.days;
+if (persisted.source) sourceEl.value = persisted.source;
+
+daysEl.addEventListener('change', () => { persistState(); load(); });
+sourceEl.addEventListener('change', () => { persistState(); load(); });
 reloadBtn.addEventListener('click', load);
 window.addEventListener('ft-search-changed', renderSorted);
 window.addEventListener('ft-data-refreshed', load);
+window.addEventListener('ft-columns-changed', (e) => {
+  if (e.detail && e.detail.page && e.detail.page !== PAGE) return;
+  layout = FT.loadColumnLayout(PAGE, 'history');
+  rebuildHeader();
+  renderSorted();
+});
 
 (async () => {
-  attachSort();
+  rebuildHeader();
   await load();
 })();

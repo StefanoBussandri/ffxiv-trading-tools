@@ -164,9 +164,18 @@
     const syncVol = () => { volSlider.disabled = !soundChk.checked; };
     soundChk.addEventListener('change', syncVol);
     syncVol();
-    // Releasing the slider previews the volume with a test ping.
-    volSlider.addEventListener('change', () => {
+    // Any interaction with the slider previews the volume — pressing it pings
+    // at the current level so the user hears it before they decide to move,
+    // and dragging plays each step as the value updates.
+    const previewVol = () => {
       if (window.FTAlerts) window.FTAlerts.ping((parseInt(volSlider.value, 10) || 0) / 100);
+    };
+    volSlider.addEventListener('pointerdown', previewVol);
+    volSlider.addEventListener('input', previewVol);
+    volSlider.addEventListener('keydown', (e) => {
+      if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End', 'PageUp', 'PageDown'].includes(e.key)) {
+        previewVol();
+      }
     });
 
     // DC change → filter HOME_WORLD options to only worlds in selected DC.

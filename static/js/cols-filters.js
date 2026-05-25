@@ -29,8 +29,11 @@
       { id: 'stale_only',  label: 'Stale listings only' },
       { id: 'bargain_only', label: 'Bargain (spread < 0)' },
     ],
+    history: [],
   };
-  const FILTER_DEFS = FILTER_DEFS_BY_CTX[CTX] || FILTER_DEFS_BY_CTX.opps;
+  const FILTER_DEFS = (CTX in FILTER_DEFS_BY_CTX)
+    ? FILTER_DEFS_BY_CTX[CTX]
+    : FILTER_DEFS_BY_CTX.opps;
 
   function loadFilters() {
     const stored = FT.prefGet(FILTERS_KEY, {});
@@ -67,13 +70,17 @@
       `<label class="filter-row"><input type="checkbox" data-filter="${f.id}" ${filters[f.id] ? 'checked' : ''}> ${f.label}</label>`,
     ).join('');
 
+    const filtersBlock = FILTER_DEFS.length
+      ? `<h3 class="section" style="margin-top:0;border-top:0;">Filters</h3>
+         <div class="filter-list">${filterRowsHtml}</div>
+         <h3 class="section">Columns</h3>`
+      : `<h3 class="section" style="margin-top:0;border-top:0;">Columns</h3>`;
+
     const back = document.createElement('div');
     back.className = 'popover-backdrop';
     back.innerHTML = `
       <div class="popover" role="dialog" aria-label="Columns &amp; filters">
-        <h3 class="section" style="margin-top:0;border-top:0;">Filters</h3>
-        <div class="filter-list">${filterRowsHtml}</div>
-        <h3 class="section">Columns</h3>
+        ${filtersBlock}
         <div class="hint" style="margin-top:0;">Toggle visibility and reorder with ↑↓.</div>
         <div id="cf-col-list" class="col-list">${colRowsHtml}</div>
         <div class="actions">
