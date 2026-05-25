@@ -18,15 +18,14 @@ dependencies, static assets) inside one folder.
 4. On first launch Windows SmartScreen may say *"Windows protected your PC"*.
    Click **More info → Run anyway** (the exe is unsigned but safe — built by
    GitHub Actions from this repo).
-5. A native window opens on the **setup screen**. Pick your data center, home
-   world and tax city. Game data downloads in the background.
+5. Your default browser opens on the **setup screen**. Pick your data center,
+   home world and tax city. Game data downloads in the background.
+6. A small **tray icon** sits in the Windows system tray (bottom-right). Use
+   it to reopen the browser tab if you close it, or to quit the app cleanly.
 
 Everything the app writes — `data.db`, `cache/`, `.env` — stays inside that
-same folder. **To uninstall: close the window and delete the folder.** No
-registry entries, no AppData, nothing left behind.
-
-The window stays responsive while the app talks to Universalis/XIVAPI; the
-server runs on a background thread.
+same folder. **To uninstall: right-click the tray icon → Quit, then delete
+the folder.** No registry entries, no AppData, nothing left behind.
 
 ### Optional: Start Menu + Desktop shortcuts
 
@@ -133,8 +132,9 @@ for `uv`.
 
 ### Building a release
 
-The desktop bundle wraps uvicorn (in a worker thread) inside a `pywebview`
-window and ships as a single folder via PyInstaller.
+The desktop bundle runs uvicorn in a worker thread, opens the app in the
+user's default browser, and parks a `pystray` tray icon on the main
+thread for clean shutdown. Ships as a single folder via PyInstaller.
 
 ```powershell
 uv sync

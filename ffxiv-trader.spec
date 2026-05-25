@@ -21,17 +21,11 @@ app_submodules = collect_submodules("app")
 # uvicorn loads protocol/loop/lifespan implementations by string at runtime.
 uvicorn_datas, uvicorn_binaries, uvicorn_hiddenimports = collect_all("uvicorn")
 
-# pywebview ships per-platform backends loaded by string.
-webview_datas, webview_binaries, webview_hiddenimports = collect_all("webview")
-
-# Pywebview on Windows imports `clr` (pythonnet) inside its winforms backend.
-# PyInstaller's automatic analysis misses Python.Runtime.dll,
-# Python.Runtime.runtimeconfig.json, and the clr_loader's per-runtime
-# submodules (netfx / hostfxr / mono), so collect them explicitly. Without
-# this the bundled app dies at startup with
-# "Failed to resolve Python.Runtime.Loader.Initialize".
-pythonnet_datas, pythonnet_binaries, pythonnet_hiddenimports = collect_all("pythonnet")
-clr_loader_datas, clr_loader_binaries, clr_loader_hiddenimports = collect_all("clr_loader")
+# pystray ships per-platform backends (win32 / gtk / darwin / xorg) and
+# picks at import time; PIL has C extensions. Collect both fully so the
+# tray icon works in the frozen bundle without .NET dependencies.
+pystray_datas, pystray_binaries, pystray_hiddenimports = collect_all("pystray")
+pil_datas, pil_binaries, pil_hiddenimports = collect_all("PIL")
 
 # pydantic v2 + pydantic-settings have C extensions and dynamic imports.
 pydantic_datas, pydantic_binaries, pydantic_hiddenimports = collect_all("pydantic")
@@ -40,9 +34,8 @@ pydantic_settings_datas, pydantic_settings_binaries, pydantic_settings_hiddenimp
 hiddenimports = (
     app_submodules
     + uvicorn_hiddenimports
-    + webview_hiddenimports
-    + pythonnet_hiddenimports
-    + clr_loader_hiddenimports
+    + pystray_hiddenimports
+    + pil_hiddenimports
     + pydantic_hiddenimports
     + pydantic_settings_hiddenimports
     + [
@@ -54,12 +47,7 @@ hiddenimports = (
         "bs4",
         "markdownify",
         "email_validator",
-        "clr",
-        "clr_loader",
-        "clr_loader.netfx",
-        "clr_loader.hostfxr",
-        "clr_loader.mono",
-        "clr_loader.types",
+        "pystray._win32",
     ]
 )
 
@@ -69,18 +57,16 @@ datas = (
         (".env.example", "."),
     ]
     + uvicorn_datas
-    + webview_datas
-    + pythonnet_datas
-    + clr_loader_datas
+    + pystray_datas
+    + pil_datas
     + pydantic_datas
     + pydantic_settings_datas
 )
 
 binaries = (
     uvicorn_binaries
-    + webview_binaries
-    + pythonnet_binaries
-    + clr_loader_binaries
+    + pystray_binaries
+    + pil_binaries
     + pydantic_binaries
     + pydantic_settings_binaries
 )
