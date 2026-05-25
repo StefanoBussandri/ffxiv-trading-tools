@@ -46,7 +46,7 @@ jobs:
           # Re-parent the build output under a space-free folder so the zip
           # extracts cleanly. End users see "FFXIV Trader" as the app name via
           # the exe + window title; the folder/zip stay shell-friendly.
-          Rename-Item "dist/FFXIV Trader" "dist/FFXIV-Trader"
+          Rename-Item -Path "dist/FFXIV Trader" -NewName "FFXIV-Trader"
           Compress-Archive -Path "dist/FFXIV-Trader" -DestinationPath $zip
           "artifact=$zip" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
         id: zip
