@@ -24,6 +24,15 @@ uvicorn_datas, uvicorn_binaries, uvicorn_hiddenimports = collect_all("uvicorn")
 # pywebview ships per-platform backends loaded by string.
 webview_datas, webview_binaries, webview_hiddenimports = collect_all("webview")
 
+# Pywebview on Windows imports `clr` (pythonnet) inside its winforms backend.
+# PyInstaller's automatic analysis misses Python.Runtime.dll,
+# Python.Runtime.runtimeconfig.json, and the clr_loader's per-runtime
+# submodules (netfx / hostfxr / mono), so collect them explicitly. Without
+# this the bundled app dies at startup with
+# "Failed to resolve Python.Runtime.Loader.Initialize".
+pythonnet_datas, pythonnet_binaries, pythonnet_hiddenimports = collect_all("pythonnet")
+clr_loader_datas, clr_loader_binaries, clr_loader_hiddenimports = collect_all("clr_loader")
+
 # pydantic v2 + pydantic-settings have C extensions and dynamic imports.
 pydantic_datas, pydantic_binaries, pydantic_hiddenimports = collect_all("pydantic")
 pydantic_settings_datas, pydantic_settings_binaries, pydantic_settings_hiddenimports = collect_all("pydantic_settings")
@@ -32,6 +41,8 @@ hiddenimports = (
     app_submodules
     + uvicorn_hiddenimports
     + webview_hiddenimports
+    + pythonnet_hiddenimports
+    + clr_loader_hiddenimports
     + pydantic_hiddenimports
     + pydantic_settings_hiddenimports
     + [
@@ -43,15 +54,36 @@ hiddenimports = (
         "bs4",
         "markdownify",
         "email_validator",
+        "clr",
+        "clr_loader",
+        "clr_loader.netfx",
+        "clr_loader.hostfxr",
+        "clr_loader.mono",
+        "clr_loader.types",
     ]
 )
 
-datas = [
-    ("static", "static"),
-    (".env.example", "."),
-] + uvicorn_datas + webview_datas + pydantic_datas + pydantic_settings_datas
+datas = (
+    [
+        ("static", "static"),
+        (".env.example", "."),
+    ]
+    + uvicorn_datas
+    + webview_datas
+    + pythonnet_datas
+    + clr_loader_datas
+    + pydantic_datas
+    + pydantic_settings_datas
+)
 
-binaries = uvicorn_binaries + webview_binaries + pydantic_binaries + pydantic_settings_binaries
+binaries = (
+    uvicorn_binaries
+    + webview_binaries
+    + pythonnet_binaries
+    + clr_loader_binaries
+    + pydantic_binaries
+    + pydantic_settings_binaries
+)
 
 a = Analysis(
     ["src/app/desktop.py"],

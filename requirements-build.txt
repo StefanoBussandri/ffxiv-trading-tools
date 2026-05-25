@@ -1,3 +1,10 @@
 # Build-only deps for producing the PyInstaller release artifact.
 # Not shipped to end users.
 pyinstaller==6.11.1
+# The pythonnet bundler hook lives in pyinstaller-hooks-contrib and is
+# updated independently of PyInstaller itself. Pin a recent build that
+# carries the pythonnet 3.x data/binary collection rules so the
+# Python.Runtime.dll, runtimeconfig.json, and clr_loader backends are
+# packaged correctly. Without this, the frozen app dies at startup with
+# "Failed to resolve Python.Runtime.Loader.Initialize".
+pyinstaller-hooks-contrib>=2024.10
