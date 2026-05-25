@@ -9,3 +9,4 @@ lxml==6.1.0
 markdownify==1.2.2
 aiosqlite==0.22.1
 beautifulsoup4==4.14.3
+pywebview==5.4

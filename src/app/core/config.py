@@ -1,10 +1,33 @@
 import sqlite3
+import sys
 from pathlib import Path
 from typing import Any
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+
+def _app_root() -> Path:
+    """Writable root: dev tree in source mode, exe folder when frozen.
+
+    PyInstaller sets sys.frozen. Bundled static/.env.example live in
+    sys._MEIPASS (read-only temp); db, cache, .env stay next to the exe so
+    the whole install is one deletable folder.
+    """
+    if getattr(sys, "frozen", False):
+        return Path(sys.executable).resolve().parent
+    return Path(__file__).resolve().parents[3]
+
+
+def _bundle_root() -> Path:
+    """Read-only bundle root for shipped assets (static/, .env.example)."""
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        return Path(meipass)
+    return _app_root()
+
+
+REPO_ROOT = _app_root()
+BUNDLE_ROOT = _bundle_root()
 
 # Mutable game/player settings — stored in data.db (app_settings table) and
 # edited via the in-app Settings panel. .env holds only infra (API URLs, rate
@@ -21,7 +44,7 @@ GAME_SETTING_KEYS = (
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_file=REPO_ROOT / ".env",
+        env_file=str(REPO_ROOT / ".env"),
         env_file_encoding="utf-8",
         extra="ignore",
     )
@@ -75,7 +98,7 @@ class Settings(BaseSettings):
 
     @property
     def static_dir(self) -> Path:
-        return REPO_ROOT / "static"
+        return BUNDLE_ROOT / "static"
 
     @property
     def cache_dir(self) -> Path:

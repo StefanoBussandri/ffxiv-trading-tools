@@ -1,0 +1,3 @@
+# Build-only deps for producing the PyInstaller release artifact.
+# Not shipped to end users.
+pyinstaller==6.11.1

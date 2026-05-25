@@ -16,6 +16,11 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 
+# PyInstaller build output
+build/
+dist/
+*.spec.bak
+
 # OS
 .DS_Store
 Thumbs.db

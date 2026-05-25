@@ -10,10 +10,15 @@ from fastapi.staticfiles import StaticFiles
 
 
 def _bootstrap_env() -> None:
-    """If .env is missing but .env.example exists, copy the example."""
-    from app.core.config import REPO_ROOT
+    """If .env is missing, seed it from the shipped .env.example.
+
+    Writes to REPO_ROOT (exe folder when frozen, source tree otherwise).
+    Reads from BUNDLE_ROOT, which is the PyInstaller _MEIPASS dir at runtime
+    or the source tree in dev — keeps the shipped template read-only.
+    """
+    from app.core.config import BUNDLE_ROOT, REPO_ROOT
     env_path = REPO_ROOT / ".env"
-    example_path = REPO_ROOT / ".env.example"
+    example_path = BUNDLE_ROOT / ".env.example"
     if not env_path.exists() and example_path.exists():
         shutil.copyfile(example_path, env_path)
         logging.getLogger("app").info(".env created from .env.example")

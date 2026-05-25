@@ -4,7 +4,39 @@ Personal-use FFXIV gil arbitrage tool. It scans Universalis market data and
 surfaces cross-world flips, vendor flips, reliable trades and collectible
 opportunities for your home world — all in a local web app.
 
-## Quick start
+## Quick start (release build — recommended)
+
+No Python install needed. The release ships everything (Python runtime, all
+dependencies, static assets) inside one folder.
+
+1. Go to the [Releases page](../../releases/latest) and download
+   `ffxiv-trader-vX.Y.Z-windows.zip`.
+2. Right-click the zip → **Extract All…** → pick any location (Desktop, a
+   games folder, wherever). This folder is the whole app.
+3. Open the extracted `ffxiv-trader\` folder and double-click
+   **`ffxiv-trader.exe`**.
+4. On first launch Windows SmartScreen may say *"Windows protected your PC"*.
+   Click **More info → Run anyway** (the exe is unsigned but safe — built by
+   GitHub Actions from this repo).
+5. A native window opens on the **setup screen**. Pick your data center, home
+   world and tax city. Game data downloads in the background.
+
+Everything the app writes — `data.db`, `cache/`, `.env` — stays inside that
+same folder. **To uninstall: close the window and delete the folder.** No
+registry entries, no AppData, nothing left behind.
+
+The window stays responsive while the app talks to Universalis/XIVAPI; the
+server runs on a background thread.
+
+### Updating
+
+Download the new zip, extract over the old folder (overwrite when prompted),
+or extract fresh and copy `data.db` + `cache/` across to keep your settings
+and history.
+
+## Quick start (run from source)
+
+For development, or if you'd rather run the Python directly.
 
 1. Double-click **`run.bat`**.
 2. Wait for your browser to open (a few seconds).
@@ -13,7 +45,7 @@ opportunities for your home world — all in a local web app.
 That's it. The first launch installs everything and downloads game data; later
 launches start in seconds.
 
-## Requirements
+### Source requirements
 
 - Windows
 - [Python 3.12+](https://www.python.org/downloads/) — install once; tick *"Add
@@ -87,6 +119,38 @@ uv run uvicorn --app-dir src app.main:app --reload
 `requirements.txt`, and launches the same server. `requirements.txt` is a
 pinned mirror of `pyproject.toml`; `pyproject.toml` stays the source of truth
 for `uv`.
+
+### Building a release
+
+The desktop bundle wraps uvicorn (in a worker thread) inside a `pywebview`
+window and ships as a single folder via PyInstaller.
+
+```powershell
+uv sync
+uv pip install -r requirements-build.txt
+uv run pyinstaller ffxiv-trader.spec --noconfirm --clean
+# Output: dist/ffxiv-trader/ffxiv-trader.exe
+```
+
+Test locally by running the exe out of `dist/ffxiv-trader/`. The window
+should open, the setup screen should appear, and `data.db` + `cache/` should
+appear next to the exe.
+
+#### Cutting a release on GitHub
+
+The [release workflow](.github/workflows/release.yml) builds on
+`windows-latest`, zips `dist/ffxiv-trader/`, and attaches the zip to a
+GitHub Release whenever a `v*.*.*` tag is pushed.
+
+```powershell
+git tag v0.1.0
+git push origin v0.1.0
+```
+
+The Action runs in ~5-8 minutes and publishes the zip to the
+[Releases page](../../releases). You can also trigger the workflow manually
+from the Actions tab (`workflow_dispatch`) to test a build without tagging —
+the artifact appears under the workflow run instead of a Release.
 
 ### Data sources
 
