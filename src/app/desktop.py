@@ -23,6 +23,7 @@ import pystray
 import uvicorn
 from PIL import Image
 
+from app.core import heartbeat
 from app.core.config import BUNDLE_ROOT
 from app.main import app
 
@@ -38,6 +39,14 @@ PREFERRED_PORT = 8000
 TRAY_TITLE = "FFXIV Trader"
 APP_USER_MODEL_ID = "FFXIVTrader.Desktop"
 MUTEX_NAME = "Global\\FFXIVTraderInstanceMutex"
+
+# Idle-shutdown watchdog. The frontend pings /heartbeat every ~10s, so a gap
+# longer than HEARTBEAT_GRACE means every tab is gone (closed, crashed, or
+# the user navigated away). HEARTBEAT_STARTUP gives the first page load time
+# to fetch /js/common.js and fire its first beacon before we start judging.
+HEARTBEAT_GRACE = 30.0
+HEARTBEAT_STARTUP = 45.0
+HEARTBEAT_POLL = 5.0
 
 # Module-level handle so the kernel keeps the mutex alive for the lifetime of
 # the process. Releasing it would let a second instance start.
@@ -116,6 +125,55 @@ def _load_tray_image() -> Image.Image:
     img = Image.new("RGB", (64, 64), (0xf5, 0xcf, 0x3d))
     return img
 
+def create_uvicorn_config(app, host: str, port: int):
+    """Create uvicorn config safe for desktop/no-console environments."""
+    
+    # Custom logging config that survives sys.stdout being None
+    log_config = {
+        "version": 1,
+        "disable_existing_loggers": False,
+        "formatters": {
+            "default": {
+                "format": "%(asctime)s | %(levelname)s | %(name)s | %(message)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+                # Remove colors when running headless
+                "use_colors": False,
+            },
+            "access": {
+                "format": "%(asctime)s | %(levelname)s | %(client_addr)s - %(request_line)s | %(status_code)s",
+                "datefmt": "%Y-%m-%d %H:%M:%S",
+                "use_colors": False,
+            },
+        },
+        "handlers": {
+            "default": {
+                "formatter": "default",
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stderr",  # safer than stdout
+            },
+            "access": {
+                "formatter": "access",
+                "class": "logging.StreamHandler",
+                "stream": "ext://sys.stderr",
+            },
+        },
+        "loggers": {
+            "uvicorn": {"handlers": ["default"], "level": "INFO", "propagate": False},
+            "uvicorn.error": {"handlers": ["default"], "level": "INFO", "propagate": False},
+            "uvicorn.access": {"handlers": ["access"], "level": "INFO", "propagate": False},
+        },
+    }
+
+    return uvicorn.Config(
+        app=app,
+        host=host,
+        port=port,
+        log_level="info",
+        access_log=False,           # you already disable this
+        log_config=log_config,
+        use_colors=False,           # important
+    )
+
 
 def main() -> int:
     if not _claim_single_instance():
@@ -125,13 +183,7 @@ def main() -> int:
     port = _pick_port()
     url = f"http://{HOST}:{port}/"
 
-    config = uvicorn.Config(
-        app,
-        host=HOST,
-        port=port,
-        log_level="info",
-        access_log=False,
-    )
+    config = create_uvicorn_config(app, HOST, port)
     server = uvicorn.Server(config)
     # uvicorn installs signal handlers when run() is called — only valid on
     # the main thread. The tray icon owns the main thread, so disable them.
@@ -170,8 +222,27 @@ def main() -> int:
         menu,
     )
 
+    # Bump the heartbeat clock now so the watchdog's startup grace runs from
+    # "server is ready" rather than "module imported", which would otherwise
+    # eat into the window the first page load has to phone home.
+    heartbeat.touch()
+
+    def _watchdog() -> None:
+        time.sleep(HEARTBEAT_STARTUP)
+        while not server.should_exit:
+            idle = time.monotonic() - heartbeat.last_ping_monotonic()
+            if idle > HEARTBEAT_GRACE:
+                log.info("no heartbeat for %.1fs — shutting down", idle)
+                # tray.stop() unblocks tray.run() on the main thread; the
+                # finally clause below then drains uvicorn.
+                tray.stop()
+                return
+            time.sleep(HEARTBEAT_POLL)
+
+    threading.Thread(target=_watchdog, name="heartbeat-watchdog", daemon=True).start()
+
     try:
-        # Blocks the main thread until _on_quit calls icon.stop().
+        # Blocks the main thread until _on_quit or the watchdog calls icon.stop().
         tray.run()
     finally:
         server.should_exit = True

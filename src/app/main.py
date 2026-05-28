@@ -27,6 +27,7 @@ def _bootstrap_env() -> None:
 _bootstrap_env()
 
 from app.api import collectibles, dashboard, favourites, history, icons, item, maps, opportunities, prefs, refresh, reliable, settings_api, tax  # noqa: E402
+from app.core import heartbeat  # noqa: E402
 from app.core.config import settings  # noqa: E402
 from app.core.db import init_db  # noqa: E402
 from app.core.http_client import close_http_client, init_http_client  # noqa: E402
@@ -67,6 +68,16 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="ffxiv-trader", lifespan=lifespan)
+
+
+@app.post("/heartbeat")
+@app.get("/heartbeat")
+async def heartbeat_ping() -> dict[str, bool]:
+    # Both verbs accepted: sendBeacon emits POST; a fetch keepalive fallback or
+    # manual debug GET should also work without bouncing through a 405.
+    heartbeat.touch()
+    return {"ok": True}
+
 
 app.include_router(tax.router)
 app.include_router(refresh.router)

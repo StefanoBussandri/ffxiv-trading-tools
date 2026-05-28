@@ -684,3 +684,27 @@ window.FT = (() => {
 })();
 
 document.addEventListener('DOMContentLoaded', FT.setActiveNav);
+
+// Browser-tab heartbeat. The desktop launcher runs a watchdog that exits the
+// process when no ping arrives within its grace window, so closing every tab
+// shuts the app down instead of leaving uvicorn squatting in the background.
+// In a regular browser (non-desktop builds) this is a cheap no-op POST.
+(function heartbeat() {
+  const INTERVAL_MS = 10000;
+  function ping() {
+    try {
+      if (navigator.sendBeacon) {
+        navigator.sendBeacon('/heartbeat');
+      } else {
+        // Older Edge/IE fallback. keepalive lets the request survive unload.
+        fetch('/heartbeat', { method: 'POST', keepalive: true }).catch(() => {});
+      }
+    } catch (e) { /* best-effort */ }
+  }
+  ping();
+  setInterval(ping, INTERVAL_MS);
+  // Deliberately no pagehide ping: that would refresh the timestamp at the
+  // exact moment the tab is going away, delaying shutdown. Letting the last
+  // ping age out naturally also handles the "multiple tabs open, one closes"
+  // case correctly — surviving tabs keep pinging.
+})();
