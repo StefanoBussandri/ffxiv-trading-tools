@@ -14,9 +14,11 @@ import ctypes
 import logging
 import os
 import socket
+import subprocess
 import sys
 import threading
 import time
+import traceback
 import webbrowser
 
 import pystray
@@ -24,8 +26,19 @@ import uvicorn
 from PIL import Image
 
 from app.core import heartbeat
-from app.core.config import BUNDLE_ROOT
+from app.core.config import BUNDLE_ROOT, LOG_DIR, LOG_PATH, REPO_ROOT
 from app.main import app
+
+try:
+    from importlib.metadata import PackageNotFoundError, version as _pkg_version
+    try:
+        APP_VERSION = _pkg_version("ffxiv-trader")
+    except PackageNotFoundError:
+        APP_VERSION = "dev"
+except Exception:
+    APP_VERSION = "dev"
+
+CONTACT_INFO = "DM Stefano on Discord if anything breaks"
 
 # The lifespan in app.main opens the system browser itself on startup with a
 # 1s delay. We replace that with a deterministic open *after* the socket
@@ -216,8 +229,40 @@ def main() -> int:
         icon.visible = False
         icon.stop()
 
+    def _on_open_logs(icon: pystray.Icon, item: pystray.MenuItem) -> None:  # noqa: ARG001
+        # `explorer /select,<file>` opens the folder with the log highlighted
+        # so the friend can right-click → Send To → email without hunting.
+        # Fall back to opening the dir if the file does not exist yet.
+        target = LOG_PATH if LOG_PATH.exists() else LOG_DIR
+        try:
+            if target == LOG_PATH:
+                subprocess.Popen(["explorer", f"/select,{target}"])
+            else:
+                subprocess.Popen(["explorer", str(target)])
+        except OSError:
+            pass
+
+    def _on_about(icon: pystray.Icon, item: pystray.MenuItem) -> None:  # noqa: ARG001
+        if sys.platform != "win32":
+            return
+        msg = (
+            f"FFXIV Trader v{APP_VERSION}\n\n"
+            f"Data: {REPO_ROOT}\n"
+            f"Logs: {LOG_PATH}\n\n"
+            f"{CONTACT_INFO}"
+        )
+        # Threaded MB so a wedged dialog does not lock the tray callback.
+        threading.Thread(
+            target=lambda: ctypes.windll.user32.MessageBoxW(
+                None, msg, "About FFXIV Trader", 0x40  # MB_ICONINFORMATION
+            ),
+            daemon=True,
+        ).start()
+
     menu = pystray.Menu(
         pystray.MenuItem("Open FFXIV Trader", _on_open, default=True),
+        pystray.MenuItem("Open log folder", _on_open_logs),
+        pystray.MenuItem("About", _on_about),
         pystray.MenuItem("Quit", _on_quit),
     )
     tray = pystray.Icon(
@@ -256,5 +301,33 @@ def main() -> int:
     return 0
 
 
+def _show_crash_dialog(exc: BaseException) -> None:
+    """Pop a Windows MessageBox so a friend running the no-console build
+    actually sees a crash instead of the app silently vanishing.
+
+    The full traceback is dumped to the rotating log via logger.exception
+    *before* this runs, so the dialog just needs to point them at the file.
+    """
+    tb_tail = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))[-800:]
+    msg = (
+        f"FFXIV Trader crashed.\n\n"
+        f"Log file:\n{LOG_PATH}\n\n"
+        f"{CONTACT_INFO}\n\n"
+        f"Last error:\n{tb_tail}"
+    )
+    if sys.platform == "win32":
+        try:
+            ctypes.windll.user32.MessageBoxW(None, msg, "FFXIV Trader — Crash", 0x10)  # MB_ICONERROR
+        except Exception:
+            pass
+
+
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except SystemExit:
+        raise
+    except BaseException as exc:
+        logging.getLogger("app.desktop").exception("fatal: %s", exc)
+        _show_crash_dialog(exc)
+        sys.exit(1)

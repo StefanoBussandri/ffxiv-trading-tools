@@ -4,9 +4,33 @@ import shutil
 import threading
 import webbrowser
 from contextlib import asynccontextmanager
+from logging.handlers import RotatingFileHandler
 
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
+
+
+def _install_file_logging() -> None:
+    """Mirror root log records into a rotating file.
+
+    Frozen builds run as windowed (no console) — stderr goes to the void, so
+    without this the friend has zero forensic trail when something breaks.
+    5 x 1 MiB rotation keeps the dir bounded; logs live alongside data.db in
+    the writable app root so the tray "Open log folder" action can point at
+    a single place.
+    """
+    from app.core.config import LOG_DIR, LOG_PATH
+    LOG_DIR.mkdir(parents=True, exist_ok=True)
+    handler = RotatingFileHandler(
+        LOG_PATH, maxBytes=1_000_000, backupCount=5, encoding="utf-8"
+    )
+    handler.setFormatter(logging.Formatter(
+        "%(asctime)s %(levelname)s %(name)s %(message)s"
+    ))
+    root = logging.getLogger()
+    # Avoid double-adding on reload (uvicorn reloader, tests re-importing).
+    if not any(isinstance(h, RotatingFileHandler) for h in root.handlers):
+        root.addHandler(handler)
 
 
 def _bootstrap_env() -> None:
@@ -35,6 +59,7 @@ from app.services.history import trim_old  # noqa: E402
 from app.services.refresh import populate_initial_cache  # noqa: E402
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
+_install_file_logging()
 # Quiet noisy httpx URL logs; our universalis client emits structured logs.
 logging.getLogger("httpx").setLevel(logging.WARNING)
 log = logging.getLogger("app")

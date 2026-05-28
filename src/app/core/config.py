@@ -1,3 +1,4 @@
+import os
 import sqlite3
 import sys
 from pathlib import Path
@@ -7,27 +8,46 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 def _app_root() -> Path:
-    """Writable root: dev tree in source mode, exe folder when frozen.
+    """Writable root: dev tree in source mode, %LOCALAPPDATA%/FFXIVTrader
+    when frozen.
 
-    PyInstaller sets sys.frozen. Bundled static/.env.example live in
-    sys._MEIPASS (read-only temp); db, cache, .env stay next to the exe so
-    the whole install is one deletable folder.
+    PyInstaller sets sys.frozen. We deliberately do NOT use the exe folder
+    in frozen mode: a friend who drops the build under "Program Files" (or
+    anywhere else UAC-protected) would crash on first DB write. LocalAppData
+    is per-user, always writable, survives reinstalls, and is the standard
+    Windows spot for app state. The dir is created on import so callers can
+    assume it exists.
     """
+    if getattr(sys, "frozen", False):
+        base = os.environ.get("LOCALAPPDATA") or os.environ.get("APPDATA")
+        if base:
+            root = Path(base) / "FFXIVTrader"
+        else:
+            # Fallback for non-Windows frozen builds / weird envs.
+            root = Path(sys.executable).resolve().parent
+        root.mkdir(parents=True, exist_ok=True)
+        return root
+    return Path(__file__).resolve().parents[3]
+
+
+def _bundle_root() -> Path:
+    """Read-only bundle root for shipped assets (static/, .env.example).
+
+    PyInstaller unpacks bundled data into sys._MEIPASS at runtime; in dev
+    the same files live in the source tree.
+    """
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        return Path(meipass)
     if getattr(sys, "frozen", False):
         return Path(sys.executable).resolve().parent
     return Path(__file__).resolve().parents[3]
 
 
-def _bundle_root() -> Path:
-    """Read-only bundle root for shipped assets (static/, .env.example)."""
-    meipass = getattr(sys, "_MEIPASS", None)
-    if meipass:
-        return Path(meipass)
-    return _app_root()
-
-
 REPO_ROOT = _app_root()
 BUNDLE_ROOT = _bundle_root()
+LOG_DIR = REPO_ROOT / "logs"
+LOG_PATH = LOG_DIR / "app.log"
 
 # Mutable game/player settings — stored in data.db (app_settings table) and
 # edited via the in-app Settings panel. .env holds only infra (API URLs, rate

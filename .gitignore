@@ -6,6 +6,7 @@
 data.db
 data.db-*
 cache/
+logs/
 reset-backup/
 
 # python
