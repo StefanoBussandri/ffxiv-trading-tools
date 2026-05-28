@@ -98,5 +98,22 @@
   <p class="setup-progress" id="setup-progress"></p>
 </form>
 <script src="/js/setup.js"></script>
+<script>
+  // Minimal heartbeat for the setup screen — common.js is not loaded here
+  // (it would redirect us back to setup on first run via the boot guard),
+  // but the desktop launcher's watchdog still expects beacons. Without
+  // this, leaving the setup page open long enough would shut the app down
+  // mid-config. Kept inline to dodge an extra round-trip on first launch.
+  (function () {
+    function ping() {
+      try {
+        if (navigator.sendBeacon) navigator.sendBeacon('/heartbeat');
+        else fetch('/heartbeat', { method: 'POST', keepalive: true }).catch(() => {});
+      } catch (e) { /* best-effort */ }
+    }
+    ping();
+    setInterval(ping, 10000);
+  })();
+</script>
 </body>
 </html>

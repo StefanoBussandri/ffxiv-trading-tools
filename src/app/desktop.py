@@ -42,10 +42,15 @@ MUTEX_NAME = "Global\\FFXIVTraderInstanceMutex"
 
 # Idle-shutdown watchdog. The frontend pings /heartbeat every ~10s, so a gap
 # longer than HEARTBEAT_GRACE means every tab is gone (closed, crashed, or
-# the user navigated away). HEARTBEAT_STARTUP gives the first page load time
-# to fetch /js/common.js and fire its first beacon before we start judging.
-HEARTBEAT_GRACE = 30.0
-HEARTBEAT_STARTUP = 45.0
+# the user navigated away). The grace window is intentionally wide because
+# browsers throttle setInterval in hidden/minimized tabs — Chrome can clamp
+# to ~1min after a tab has been backgrounded for a while, so anything below
+# ~90s risks killing the app while a real tab is still open but minimized.
+# HEARTBEAT_STARTUP only controls how soon the watchdog *thread* starts
+# polling; until the first beacon arrives, no shutdown can fire regardless
+# (see app.core.heartbeat: last_ping starts as None).
+HEARTBEAT_GRACE = 90.0
+HEARTBEAT_STARTUP = 15.0
 HEARTBEAT_POLL = 5.0
 
 # Module-level handle so the kernel keeps the mutex alive for the lifetime of
@@ -222,21 +227,22 @@ def main() -> int:
         menu,
     )
 
-    # Bump the heartbeat clock now so the watchdog's startup grace runs from
-    # "server is ready" rather than "module imported", which would otherwise
-    # eat into the window the first page load has to phone home.
-    heartbeat.touch()
-
     def _watchdog() -> None:
         time.sleep(HEARTBEAT_STARTUP)
         while not server.should_exit:
-            idle = time.monotonic() - heartbeat.last_ping_monotonic()
-            if idle > HEARTBEAT_GRACE:
-                log.info("no heartbeat for %.1fs — shutting down", idle)
-                # tray.stop() unblocks tray.run() on the main thread; the
-                # finally clause below then drains uvicorn.
-                tray.stop()
-                return
+            last = heartbeat.last_ping_monotonic()
+            # None means no browser has ever phoned home — keep waiting. This
+            # covers slow first-run cache bootstrap and time spent on
+            # /setup.html (which loads its own heartbeat snippet, but is also
+            # the page a friend might leave open while reading).
+            if last is not None:
+                idle = time.monotonic() - last
+                if idle > HEARTBEAT_GRACE:
+                    log.info("no heartbeat for %.1fs — shutting down", idle)
+                    # tray.stop() unblocks tray.run() on the main thread; the
+                    # finally clause below then drains uvicorn.
+                    tray.stop()
+                    return
             time.sleep(HEARTBEAT_POLL)
 
     threading.Thread(target=_watchdog, name="heartbeat-watchdog", daemon=True).start()
