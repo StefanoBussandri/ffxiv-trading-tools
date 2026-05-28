@@ -60,8 +60,22 @@ Everything writable lives under `%LOCALAPPDATA%\FFXIVTrader\`:
 - `logs\app.log` — rotating log (5 × 1 MiB). Send this if it breaks.
 - `.env` — infra config (API URLs, rate limits). Don't touch unless asked.
 
-Wiping that folder = fresh install. Uninstall = delete the folder + the
-extracted exe folder.
+Wiping that folder = fresh install.
+
+## Uninstall
+
+Double-click `Uninstall.bat` inside the extracted folder. It will:
+
+1. Ask you to type **YES** to confirm.
+2. Stop the running app.
+3. Delete `%LOCALAPPDATA%\FFXIVTrader\` (settings, history, cache, logs).
+4. Delete the Desktop and Start Menu shortcuts.
+5. Delete the install folder itself (a couple seconds after the script
+   exits — that delay is normal, the folder cannot delete itself while the
+   script is still running inside it).
+
+Manual fallback if the bat fails: quit via tray → delete the install
+folder → delete `%LOCALAPPDATA%\FFXIVTrader\`.
 
 ## When something breaks
 

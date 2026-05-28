@@ -130,7 +130,7 @@ coll = COLLECT(
 import shutil  # noqa: E402
 
 _release_dir = os.path.join(DISTPATH, "FFXIV Trader")
-for _aux in ("Create shortcuts.bat", "Delete shortcuts.bat"):
+for _aux in ("Create shortcuts.bat", "Delete shortcuts.bat", "Uninstall.bat", "FIRST_RUN.md"):
     _src = os.path.join(os.getcwd(), _aux)
     if os.path.exists(_src) and os.path.isdir(_release_dir):
         shutil.copy2(_src, os.path.join(_release_dir, _aux))

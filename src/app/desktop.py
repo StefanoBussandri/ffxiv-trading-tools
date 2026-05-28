@@ -38,7 +38,7 @@ try:
 except Exception:
     APP_VERSION = "dev"
 
-CONTACT_INFO = "DM Stefano on Discord if anything breaks"
+CONTACT_INFO = ""
 
 # The lifespan in app.main opens the system browser itself on startup with a
 # 1s delay. We replace that with a deterministic open *after* the socket
@@ -248,9 +248,10 @@ def main() -> int:
         msg = (
             f"FFXIV Trader v{APP_VERSION}\n\n"
             f"Data: {REPO_ROOT}\n"
-            f"Logs: {LOG_PATH}\n\n"
-            f"{CONTACT_INFO}"
+            f"Logs: {LOG_PATH}"
         )
+        if CONTACT_INFO:
+            msg += f"\n\n{CONTACT_INFO}"
         # Threaded MB so a wedged dialog does not lock the tray callback.
         threading.Thread(
             target=lambda: ctypes.windll.user32.MessageBoxW(
@@ -309,12 +310,10 @@ def _show_crash_dialog(exc: BaseException) -> None:
     *before* this runs, so the dialog just needs to point them at the file.
     """
     tb_tail = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))[-800:]
-    msg = (
-        f"FFXIV Trader crashed.\n\n"
-        f"Log file:\n{LOG_PATH}\n\n"
-        f"{CONTACT_INFO}\n\n"
-        f"Last error:\n{tb_tail}"
-    )
+    msg = f"FFXIV Trader crashed.\n\nLog file:\n{LOG_PATH}\n\n"
+    if CONTACT_INFO:
+        msg += f"{CONTACT_INFO}\n\n"
+    msg += f"Last error:\n{tb_tail}"
     if sys.platform == "win32":
         try:
             ctypes.windll.user32.MessageBoxW(None, msg, "FFXIV Trader — Crash", 0x10)  # MB_ICONERROR
